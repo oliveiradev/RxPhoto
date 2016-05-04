@@ -10,19 +10,22 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.observers.SerializedSubscriber;
 import rx.subjects.PublishSubject;
 import rx.subjects.SerializedSubject;
 import rx.subjects.Subject;
 
-public class RxPhoto {
+public final class RxPhoto {
 
-    private static final Subject<Bitmap, Bitmap> subject = new SerializedSubject<Bitmap, Bitmap>(PublishSubject.<Bitmap>create());
+    private static Subject<Bitmap, Bitmap> subject = new SerializedSubject(PublishSubject.create());
     private static Context mContext;
 
     public static Observable<Bitmap> request(Context context, TypeRequest typeRequest) {
         mContext = context;
         startShadowActivity(typeRequest);
-        return subject.compose(Transformers.<Bitmap>applySchedeulers());
+        return subject;
     }
 
     private static void startShadowActivity(TypeRequest typeRequest) {
@@ -44,10 +47,17 @@ public class RxPhoto {
                 try {
                     subject.onNext(getBitmapFromStream(uri));
                     subject.onCompleted();
+                    subject = RxPhoto.Factory.create();
                 } catch (IOException e) {
                     subject.onError(e);
                     e.printStackTrace();
                 }
             }
+    }
+
+    private static class Factory{
+        public static Subject create(){
+            return new SerializedSubject(PublishSubject.create());
+        }
     }
 }
