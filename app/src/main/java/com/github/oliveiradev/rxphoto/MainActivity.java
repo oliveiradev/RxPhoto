@@ -31,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
                         .doOnNext(new Action1<Bitmap>() {
                             @Override
                             public void call(Bitmap bitmap) {
-                                Log.d("XXXXXXXXXXXX",""+bitmap);
                                 image.setImageBitmap(bitmap);
                             }
                         })
@@ -47,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
                         .doOnNext(new Action1<Bitmap>() {
                             @Override
                             public void call(Bitmap bitmap) {
-                                Log.d("XXXXXXXXXXXX",""+bitmap);
                                 image.setImageBitmap(bitmap);
                             }
                         })
