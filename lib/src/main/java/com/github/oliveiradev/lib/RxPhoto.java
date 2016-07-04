@@ -10,9 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import rx.Observable;
-import rx.Observer;
-import rx.Subscriber;
-import rx.observers.SerializedSubscriber;
 import rx.subjects.PublishSubject;
 import rx.subjects.SerializedSubject;
 import rx.subjects.Subject;
@@ -24,11 +21,12 @@ public final class RxPhoto {
 
     public static Observable<Bitmap> request(Context context, TypeRequest typeRequest) {
         mContext = context;
-        startShadowActivity(typeRequest);
+        startOverlapActivity(typeRequest);
+        subject = Factory.create();
         return subject;
     }
 
-    private static void startShadowActivity(TypeRequest typeRequest) {
+    private static void startOverlapActivity(TypeRequest typeRequest) {
         Intent intent = new Intent(mContext, OverlapActivity.class);
         intent.putExtra("enum", typeRequest);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -47,7 +45,6 @@ public final class RxPhoto {
                 try {
                     subject.onNext(getBitmapFromStream(uri));
                     subject.onCompleted();
-                    subject = RxPhoto.Factory.create();
                 } catch (IOException e) {
                     subject.onError(e);
                     e.printStackTrace();

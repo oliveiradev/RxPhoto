@@ -1,6 +1,5 @@
 package com.github.oliveiradev.lib;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -8,16 +7,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
-
-import com.tbruyelle.rxpermissions.RxPermissions;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import rx.functions.Action1;
 
 /**
  * Created by felipe on 03/05/16.
@@ -29,21 +23,7 @@ public class OverlapActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        RxPermissions.getInstance(this)
-                .request(Manifest.permission.CAMERA,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .subscribe(new Action1<Boolean>() {
-                    @Override
-                    public void call(Boolean granted) {
-                        if (savedInstanceState == null && granted) {
-                            handleIntent(getIntent());
-                        }else {
-                            finish();
-                        }
-                    }
-                });
+        handleIntent(getIntent());
     }
 
     @Override
@@ -59,7 +39,7 @@ public class OverlapActivity extends Activity {
             camera();
     }
 
-    public void gallery() {
+    private void gallery() {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
