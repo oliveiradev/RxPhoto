@@ -1,4 +1,5 @@
 # RxPhoto
+[![](https://jitpack.io/v/oliveiradev/RxPhoto.svg)](https://jitpack.io/#oliveiradev/RxPhoto)
 
 A simple library for delivery bitmaps using reactive approach.
 
@@ -17,10 +18,35 @@ RxPhoto.request(context,TypeRequest.GALLERY)
 
 If you need get a picture use `TypeRequest.GALLERY` if you need take a picture use `TypeRequest.CAMERA`
 
+#Install 
+
+Add jitpack repositorie in your __build.gradle__ root level
+```groovy
+allprojects {
+		repositories {
+			...
+			maven { url "https://jitpack.io" }
+		}
+	}
+```
+and , add this dependency
+
+```groovy
+dependencies {
+	compile 'com.github.oliveiradev:RxPhoto:0.1.0'
+}
+```
+
+
 ## To do
 - [ ] Add bitmap compressor
 - [ ] Define image resize
 - [ ] Add run time permissions for android > 6
+
+
+## Sample
+
+The sample is on `app` module
 
 #License
 ```
