@@ -8,18 +8,75 @@ A simple library for delivery bitmaps using reactive approach.
 
 Is very simple, when you need to get a picture of gallery or take a picture, use that:
 
+* Get bitmap
 ```java
-RxPhoto.request(context,TypeRequest.GALLERY)
-       .compose(Transformers.<Bitmap>applySchedeulers())
-       .doOnNext((bitmap) -> {
-          //your picture in bitmap format
-       })
-       .subscribe();
+RxPhoto.requestBitmap(context, TypeRequest.GALLERY)
+		// define your schedulers if necessary
+		.doOnNext((bitmap) -> { 
+			// lambda way
+          		//your picture in bitmap format
+       		})
+		.subscribe();
+
+
+
+```
+
+* Get Uri
+```java
+RxPhoto.requestUri(context, TypeRequest.GALLERY)
+		// define your schedulers if necessary
+		.doOnNext((uri) -> { 
+			// lambda way
+          		//your picture in bitmap format
+       		})
+		.subscribe();
+
+
+
+```
+
+* Get Thumbnails
+```java
+RxPhoto.requestThumbnails(context, TypeRequest.GALLERY,
+		new Pair(60, 60), new Pair(120, 120), new Pair(240, 240))
+		// define your schedulers if necessary
+		.doOnNext((uri) -> { 
+			// that guy go propagate call three times, the number of your sizes
+			// lambda way
+          		//your picture in bitmap format
+       		})
+		.subscribe();
+
+
+
+```
+
+* Get bitmap and transform to thumbnail
+```java
+RxPhoto.requestBitmap(context, TypeRequest.GALLERY)
+		// define your schedulers if necessary
+		// original bitmap
+		.doOnNext((bitmap) -> { 
+			// lambda way
+			//your picture in bitmap format
+		})
+		// if the ordernation not important using flatMap else using concatMap
+		.flatMap(RxPhoto.transformToThumbnail(new Pair(240, 240), new Pair(120, 120), new Pair(60, 60)))
+		.doOnNext((uri) -> { 
+			// that guy go propagate call three times, the number of your sizes
+			// lambda way
+			//your picture in bitmap format
+		})
+		.subscribe();
+
+
+
 ```
 
 If you need get a picture use `TypeRequest.GALLERY` if you need take a picture use `TypeRequest.CAMERA`
 
-#Install 
+# Import dependency 
 
 Add jitpack repositorie in your __build.gradle__ root level
 ```groovy
@@ -34,20 +91,33 @@ and , add this dependency
 
 ```groovy
 dependencies {
-	compile 'com.github.oliveiradev:RxPhoto:0.1.0'
+	compile 'com.github.oliveiradev:RxPhoto:$latest_version'
 }
 ```
 
 
 ## To do
 - [ ] Add bitmap compressor
-- [ ] Define image resize
 - [ ] Add run time permissions for android > 6
 
 
 ## Sample
 
 The sample is on `app` module
+
+## Developed by 
+
+* Felipe Oliveira
+
+Gmail: [felipe.oliveiradev@gmail.com](felipe.oliveiradev@gmail.com)
+
+[Add me to Linkedin](https://br.linkedin.com/in/felipe-oliveira-03334b5b)
+
+## Libraries used
+
+[RxJava](https://github.com/ReactiveX/RxJava)
+
+[RxAndroid](https://github.com/ReactiveX/RxAndroid)
 
 #License
 ```
