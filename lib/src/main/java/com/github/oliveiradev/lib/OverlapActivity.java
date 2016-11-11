@@ -8,6 +8,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 
+import com.github.oliveiradev.lib.shared.Constants;
+import com.github.oliveiradev.lib.shared.TypeRequest;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -32,7 +35,7 @@ public class OverlapActivity extends Activity {
     }
 
     private void handleIntent(Intent intent) {
-        TypeRequest typeRequest = (TypeRequest) intent.getExtras().get("enum");
+        TypeRequest typeRequest = (TypeRequest) intent.getExtras().get(Constants.REQUEST_TYPE_EXTRA);
         if (typeRequest == TypeRequest.GALLERY)
             gallery();
         else
