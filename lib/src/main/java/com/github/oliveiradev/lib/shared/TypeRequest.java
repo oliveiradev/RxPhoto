@@ -1,4 +1,4 @@
-package com.github.oliveiradev.lib;
+package com.github.oliveiradev.lib.shared;
 
 public enum TypeRequest {
     CAMERA(1),GALLERY(2);

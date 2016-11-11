@@ -1,4 +1,4 @@
-package com.github.oliveiradev.lib;
+package com.github.oliveiradev.lib.shared;
 
 /**
  * Created by felipe on 03/05/16.
