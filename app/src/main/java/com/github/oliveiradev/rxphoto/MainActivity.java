@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.get).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                image.setImageBitmap(null);
                 thumbsContent.removeAllViews();
                 RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY)
                         .observeOn(AndroidSchedulers.mainThread())
@@ -68,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.get_thumb).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                image.setImageBitmap(null);
+                thumbsContent.removeAllViews();
                 subscription.unsubscribe();
                 subscription = RxPhoto.requestThumbnails(v.getContext(), TypeRequest.GALLERY,
                         new Pair(60, 60), new Pair(120, 120), new Pair(240, 240))
@@ -88,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.transform).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                image.setImageBitmap(null);
+                thumbsContent.removeAllViews();
                 subscription.unsubscribe();
                 subscription = RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY)
                         .subscribeOn(Schedulers.io())
