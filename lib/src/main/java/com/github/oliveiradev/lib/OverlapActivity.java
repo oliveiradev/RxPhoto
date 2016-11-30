@@ -25,12 +25,16 @@ import java.util.Locale;
  */
 public class OverlapActivity extends Activity {
 
+    private final static String FILE_URI_EXTRA = "FILE_URI";
+
     private Uri fileUri;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        handleIntent(getIntent());
+        if (savedInstanceState == null) {
+            handleIntent(getIntent());
+        }
     }
 
     @Override
@@ -72,6 +76,17 @@ public class OverlapActivity extends Activity {
         return contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(FILE_URI_EXTRA, fileUri);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        fileUri = savedInstanceState.getParcelable(FILE_URI_EXTRA);
+    }
 
     private Uri getUri(int requestCode, Intent data) {
         if (requestCode == Constants.REQUEST_CODE_ATTACH_IMAGE) return data.getData();
