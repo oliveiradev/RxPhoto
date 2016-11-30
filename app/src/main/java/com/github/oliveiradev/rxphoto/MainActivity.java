@@ -9,16 +9,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.github.oliveiradev.lib.RxPhoto;
-import com.github.oliveiradev.lib.compressor.SimpleCompressor;
 import com.github.oliveiradev.lib.shared.TypeRequest;
 
 import rx.Observable;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
+import rx.subscriptions.Subscriptions;
 
 public class MainActivity extends AppCompatActivity {
+
+    private Subscription subscription = Subscriptions.empty();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +50,10 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.take).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                image.setImageBitmap(null);
                 thumbsContent.removeAllViews();
-                RxPhoto.requestBitmap(v.getContext(), TypeRequest.CAMERA)
+                subscription.unsubscribe();
+                subscription = RxPhoto.requestBitmap(v.getContext(), TypeRequest.CAMERA)
                         .observeOn(AndroidSchedulers.mainThread())
                         .doOnNext(new Action1<Bitmap>() {
                             @Override
@@ -63,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.get_thumb).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                RxPhoto.requestThumbnails(v.getContext(), TypeRequest.GALLERY,
+                subscription.unsubscribe();
+                subscription = RxPhoto.requestThumbnails(v.getContext(), TypeRequest.GALLERY,
                         new Pair(60, 60), new Pair(120, 120), new Pair(240, 240))
                         .observeOn(AndroidSchedulers.mainThread())
                         .doOnNext(new Action1<Bitmap>() {
@@ -82,7 +88,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.transform).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY)
+                subscription.unsubscribe();
+                subscription = RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .flatMap(RxPhoto.transformToThumbnail(new Pair(240, 240), new Pair(120, 120), new Pair(60, 60)))
