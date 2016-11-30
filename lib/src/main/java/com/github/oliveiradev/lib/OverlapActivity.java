@@ -1,21 +1,16 @@
 package com.github.oliveiradev.lib;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.content.FileProvider;
 
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
 
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
