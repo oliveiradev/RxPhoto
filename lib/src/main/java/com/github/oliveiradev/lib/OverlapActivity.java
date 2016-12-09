@@ -1,21 +1,16 @@
 package com.github.oliveiradev.lib;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.content.FileProvider;
 
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
 
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -25,12 +20,16 @@ import java.util.Locale;
  */
 public class OverlapActivity extends Activity {
 
+    private final static String FILE_URI_EXTRA = "FILE_URI";
+
     private Uri fileUri;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        handleIntent(getIntent());
+        if (savedInstanceState == null) {
+            handleIntent(getIntent());
+        }
     }
 
     @Override
@@ -72,6 +71,17 @@ public class OverlapActivity extends Activity {
         return contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(FILE_URI_EXTRA, fileUri);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        fileUri = savedInstanceState.getParcelable(FILE_URI_EXTRA);
+    }
 
     private Uri getUri(int requestCode, Intent data) {
         if (requestCode == Constants.REQUEST_CODE_ATTACH_IMAGE) return data.getData();

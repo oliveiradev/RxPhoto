@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.Pair;
 
 import com.github.oliveiradev.lib.shared.Constants;
@@ -13,10 +14,15 @@ import com.github.oliveiradev.lib.shared.ResponseType;
 import com.github.oliveiradev.lib.shared.TypeRequest;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import rx.functions.Func2;
+import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 import static com.github.oliveiradev.lib.shared.ResponseType.BITMAP;
@@ -119,19 +125,60 @@ public final class RxPhoto {
         uriPublishSubject.onNext(uri);
     }
 
-    private static void propagateBitmap(Uri uri) throws IOException {
-        bitmapPublishSubject.onNext(getBitmapFromStream(uri));
+    private static void propagateBitmap(final Uri uri) {
+        getBitmapObservable(uri)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(bitmapPublishSubject);
+    }
+
+    private static Observable getBitmapObservable(final Uri uri) {
+        return Observable.create(new Observable.OnSubscribe<Bitmap>() {
+            @Override
+            public void call(Subscriber<? super Bitmap> subscriber) {
+                try {
+                    Bitmap b = getBitmapFromStream(uri);
+                    if (b == null)
+                        throw new RuntimeException("bitmap is null");
+                    subscriber.onNext(b);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }).retryWhen(getRetryHandler());
     }
 
     private static void propagateThumbs(Uri uri) throws IOException {
-        final Bitmap bitmap = getBitmapFromStream(uri);
-        Observable.from(sizes)
-                .doOnNext(new Action1<Pair<Integer, Integer>>() {
+        Observable
+                .combineLatest(getBitmapObservable(uri), Observable.from(sizes), new Func2<Bitmap, Pair<Integer, Integer>, Bitmap>() {
                     @Override
-                    public void call(Pair<Integer, Integer> size) {
-                        bitmapPublishSubject.onNext(getThumbnail(bitmap, size));
+                    public Bitmap call(Bitmap bitmap, Pair<Integer, Integer> size) {
+                        return getThumbnail(bitmap, size);
                     }
                 })
-                .subscribe();
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(bitmapPublishSubject);
+    }
+
+    public static Func1<? super Observable<? extends Throwable>, ? extends Observable<?>> getRetryHandler() {
+        return new Func1<Observable<? extends Throwable>, Observable<?>>() {
+            @Override
+            public Observable<?> call(Observable<? extends Throwable> errors) {
+                return errors
+                        .zipWith(Observable.range(1, 5), new Func2<Throwable, Integer, Integer>() {
+                            @Override
+                            public Integer call(Throwable throwable, Integer integer) {
+                                return integer;
+                            }
+                        })
+                        .flatMap(new Func1<Integer, Observable<?>>() {
+                            @Override
+                            public Observable<?> call(Integer integer) {
+                                return Observable.timer(500, TimeUnit.MILLISECONDS);
+                            }
+                        });
+            }
+        };
     }
 }
