@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">lib</string>
+    <string name="error_camera_permission">No Camera permission!</string>
+    <string name="error_gallery_permission">No Gallery permission!</string>
 </resources>
