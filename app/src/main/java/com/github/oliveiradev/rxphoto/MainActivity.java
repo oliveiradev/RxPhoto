@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 image.setImageBitmap(null);
                 thumbsContent.removeAllViews();
-                RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY)
+                RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY,300,300)
                         .observeOn(AndroidSchedulers.mainThread())
                         .doOnNext(new Action1<Bitmap>() {
                             @Override
