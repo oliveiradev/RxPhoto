@@ -98,7 +98,6 @@ dependencies {
 
 ## To do
 - [ ] Add bitmap compressor
-- [ ] Add run time permissions for android > 6
 
 
 ## Sample
@@ -112,6 +111,12 @@ The sample is on `app` module
 Gmail: [felipe.oliveiradev@gmail.com](felipe.oliveiradev@gmail.com)
 
 [Add me to Linkedin](https://br.linkedin.com/in/felipe-oliveira-03334b5b)
+
+## Contribuitors
+
+[Angelo Moroni](https://github.com/chemickypes)
+
+[maciekczwa](https://github.com/maciekczwa)
 
 ## Libraries used
 
