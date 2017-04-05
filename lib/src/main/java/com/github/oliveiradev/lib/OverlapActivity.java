@@ -1,12 +1,17 @@
 package com.github.oliveiradev.lib;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.widget.Toast;
 
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
@@ -21,6 +26,8 @@ import java.util.Locale;
 public class OverlapActivity extends Activity {
 
     private final static String FILE_URI_EXTRA = "FILE_URI";
+    private static final int REQUEST_CAMERA = 2;
+    private static final int REQUEST_GALLERY = 1;
 
     private Uri fileUri;
 
@@ -39,10 +46,15 @@ public class OverlapActivity extends Activity {
 
     private void handleIntent(Intent intent) {
         TypeRequest typeRequest = (TypeRequest) intent.getExtras().get(Constants.REQUEST_TYPE_EXTRA);
-        if (typeRequest == TypeRequest.GALLERY)
-            gallery();
-        else
-            camera();
+
+        if(hasPermission(typeRequest)) {
+            if (typeRequest == TypeRequest.GALLERY)
+                gallery();
+            else
+                camera();
+        }else {
+            requestPermission(typeRequest);
+        }
     }
 
     private void gallery() {
@@ -61,6 +73,59 @@ public class OverlapActivity extends Activity {
             startActivityForResult(takePictureIntent, Constants.REQUEST_CODE_TAKE_PICURE);
         }
 
+    }
+
+    private boolean hasPermission(TypeRequest typeRequest) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if(typeRequest == TypeRequest.GALLERY){
+
+                return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
+                        == PackageManager.PERMISSION_GRANTED;
+            }else {
+                return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
+                        == PackageManager.PERMISSION_GRANTED
+                        &&  checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+            }
+        }else {
+            return true;
+        }
+    }
+
+    private void requestPermission(TypeRequest typeRequest){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{typeRequest == TypeRequest.GALLERY ? Manifest.permission.WRITE_EXTERNAL_STORAGE : Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    typeRequest == TypeRequest.GALLERY ? REQUEST_GALLERY : REQUEST_CAMERA );
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case REQUEST_CAMERA:
+                if(grantResults.length > 1
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                    camera();
+
+                }else {
+                    Toast.makeText(this,R.string.error_camera_permission,Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
+            case REQUEST_GALLERY:
+                if(grantResults.length >= 1
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    gallery();
+
+                }else {
+                    Toast.makeText(this,R.string.error_gallery_permission,Toast.LENGTH_LONG).show();
+                    finish();
+                }
+                break;
+
+
+        }
     }
 
     private Uri createImageUri() {
