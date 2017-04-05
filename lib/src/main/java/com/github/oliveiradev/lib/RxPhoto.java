@@ -46,6 +46,10 @@ public final class RxPhoto {
         return requestBitmap(context,typeRequest,new Pair<>(Constants.IMAGE_SIZE,Constants.IMAGE_SIZE));
     }
 
+    public static Observable<Bitmap> requestBitmap(Context context, TypeRequest typeRequest,Integer width, Integer height) {
+        return requestBitmap(context,typeRequest,new Pair<>(width,height));
+    }
+
     public static Observable<Bitmap> requestBitmap(Context context, TypeRequest typeRequest,Pair<Integer,Integer> bitmapSize) {
         RxPhoto.context = context;
         response = BITMAP;
