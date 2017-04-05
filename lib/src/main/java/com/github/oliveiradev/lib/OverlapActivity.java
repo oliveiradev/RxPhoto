@@ -58,10 +58,11 @@ public class OverlapActivity extends Activity {
     }
 
     private void gallery() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
+        /*Intent intent = new Intent();
+        intent.setType("image*//*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);*/
+        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, Constants.REQUEST_CODE_ATTACH_IMAGE);
     }
 
