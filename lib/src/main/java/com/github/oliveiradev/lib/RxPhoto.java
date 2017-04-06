@@ -12,6 +12,7 @@ import android.util.Pair;
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.ResponseType;
 import com.github.oliveiradev.lib.shared.TypeRequest;
+import com.github.oliveiradev.lib.util.Utils;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -35,15 +36,25 @@ public final class RxPhoto {
     private static PublishSubject<Bitmap> bitmapPublishSubject = PublishSubject.create();
     private static PublishSubject<Uri> uriPublishSubject = PublishSubject.create();
     private static Pair<Integer, Integer>[] sizes;
+    private static Pair<Integer, Integer> bitmapSizes;
     private static ResponseType response;
 
     private RxPhoto() {
     }
 
     public static Observable<Bitmap> requestBitmap(Context context, TypeRequest typeRequest) {
+        return requestBitmap(context,typeRequest,new Pair<>(Constants.IMAGE_SIZE,Constants.IMAGE_SIZE));
+    }
+
+    public static Observable<Bitmap> requestBitmap(Context context, TypeRequest typeRequest,Integer width, Integer height) {
+        return requestBitmap(context,typeRequest,new Pair<>(width,height));
+    }
+
+    public static Observable<Bitmap> requestBitmap(Context context, TypeRequest typeRequest,Pair<Integer,Integer> bitmapSize) {
         RxPhoto.context = context;
         response = BITMAP;
         startOverlapActivity(typeRequest);
+        RxPhoto.bitmapSizes = bitmapSize;
         return bitmapPublishSubject;
     }
 
@@ -86,7 +97,8 @@ public final class RxPhoto {
     }
 
     private static Bitmap getBitmapFromStream(Uri url) throws IOException {
-        return MediaStore.Images.Media.getBitmap(context.getContentResolver(), url);
+        //return MediaStore.Images.Media.getBitmap(context.getContentResolver(), url);
+        return Utils.getBitmap(context,url,RxPhoto.bitmapSizes.first,RxPhoto.bitmapSizes.second);
     }
 
     private static Bitmap getThumbnail(Bitmap bitmap, Pair<Integer, Integer> resizeValues) {
