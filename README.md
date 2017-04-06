@@ -96,10 +96,6 @@ dependencies {
 ```
 
 
-## To do
-- [ ] Add bitmap compressor
-
-
 ## Sample
 
 The sample is on `app` module
