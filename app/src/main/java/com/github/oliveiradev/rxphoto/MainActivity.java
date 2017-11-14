@@ -8,20 +8,18 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.github.oliveiradev.lib.RxPhoto;
+import com.github.oliveiradev.lib.Rx2Photo;
 import com.github.oliveiradev.lib.shared.TypeRequest;
 
-import rx.Observable;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.Subscriptions;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
+
 
 public class MainActivity extends AppCompatActivity {
 
-    private Subscription subscription = Subscriptions.empty();
+    private Disposable disposable = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,15 +34,19 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 image.setImageBitmap(null);
                 thumbsContent.removeAllViews();
-                RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY,300,300)
+
+                Rx2Photo.with(v.getContext())
+                        .requestBitmap(TypeRequest.GALLERY, 300, 300)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Action1<Bitmap>() {
+                        .doOnNext(new Consumer<Bitmap>() {
                             @Override
-                            public void call(Bitmap bitmap) {
+                            public void accept(Bitmap bitmap) throws Exception {
                                 image.setImageBitmap(bitmap);
                             }
                         })
                         .subscribe();
+
+
             }
         });
 
@@ -53,12 +55,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 image.setImageBitmap(null);
                 thumbsContent.removeAllViews();
-                subscription.unsubscribe();
-                subscription = RxPhoto.requestBitmap(v.getContext(), TypeRequest.CAMERA)
+                if (disposable != null) {
+                    disposable.dispose();
+                }
+                disposable = Rx2Photo.with(v.getContext())
+                        .requestBitmap(TypeRequest.CAMERA)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Action1<Bitmap>() {
+                        .doOnNext(new Consumer<Bitmap>() {
                             @Override
-                            public void call(Bitmap bitmap) {
+                            public void accept(Bitmap bitmap) throws Exception {
                                 image.setImageBitmap(bitmap);
                             }
                         })
@@ -71,17 +76,20 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 image.setImageBitmap(null);
                 thumbsContent.removeAllViews();
-                subscription.unsubscribe();
-                subscription = RxPhoto.requestThumbnails(v.getContext(), TypeRequest.GALLERY,
-                        new Pair(60, 60), new Pair(120, 120), new Pair(240, 240))
+                if (disposable != null) {
+                    disposable.dispose();
+                }
+                disposable = Rx2Photo.with(v.getContext())
+                        .requestThumbnails(TypeRequest.GALLERY, new Pair(60, 60), new Pair(120, 120), new Pair(240, 240))
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Action1<Bitmap>() {
+                        .doOnNext(new Consumer<Bitmap>() {
                             @Override
-                            public void call(Bitmap bitmap) {
+                            public void accept(Bitmap bitmap) throws Exception {
                                 final ImageView newImage = new ImageView(MainActivity.this);
                                 newImage.setImageBitmap(bitmap);
                                 newImage.setPadding(10,10,10,10);
                                 thumbsContent.addView(newImage);
+
                             }
                         })
                         .subscribe();
@@ -93,14 +101,17 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 image.setImageBitmap(null);
                 thumbsContent.removeAllViews();
-                subscription.unsubscribe();
-                subscription = RxPhoto.requestBitmap(v.getContext(), TypeRequest.GALLERY)
+                if (disposable != null) {
+                    disposable.dispose();
+                }
+                disposable = Rx2Photo.with(v.getContext())
+                        .requestBitmap(TypeRequest.GALLERY)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .flatMap(RxPhoto.transformToThumbnail(new Pair(240, 240), new Pair(120, 120), new Pair(60, 60)))
-                        .doOnNext(new Action1<Bitmap>() {
+                        .flatMap(Rx2Photo.transformToThumbnail(new Pair(240, 240), new Pair(120, 120), new Pair(60, 60)))
+                        .doOnNext(new Consumer<Bitmap>() {
                             @Override
-                            public void call(Bitmap bitmap) {
+                            public void accept(Bitmap bitmap) throws Exception {
                                 final ImageView newImage = new ImageView(MainActivity.this);
                                 newImage.setImageBitmap(bitmap);
                                 newImage.setPadding(10,10,10,10);

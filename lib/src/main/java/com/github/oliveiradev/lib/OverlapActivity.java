@@ -8,9 +8,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.v4.app.BundleCompat;
 import android.widget.Toast;
 
 import com.github.oliveiradev.lib.shared.Constants;
@@ -39,6 +42,27 @@ public class OverlapActivity extends Activity {
         }
     }
 
+    private Rx2Photo rx2Photo = null;
+
+    private static class Rx2PhotoBinder extends Binder {
+
+        final Rx2Photo rx2Photo;
+
+        private Rx2PhotoBinder(Rx2Photo rx2Photo) {
+            this.rx2Photo = rx2Photo;
+        }
+    }
+
+    public static Intent newIntent(final Context context,  final TypeRequest typeRequest, final Rx2Photo caller) {
+        Intent intent = new Intent(context, OverlapActivity.class);
+        intent.putExtra(Constants.REQUEST_TYPE_EXTRA, typeRequest);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Bundle bundle = new Bundle();
+        BundleCompat.putBinder(bundle, Constants.CALLER_EXTRA, new Rx2PhotoBinder(caller));
+        intent.putExtra(Constants.CALLER_EXTRA, bundle);
+        return intent;
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         handleIntent(intent);
@@ -46,6 +70,14 @@ public class OverlapActivity extends Activity {
 
     private void handleIntent(Intent intent) {
         TypeRequest typeRequest = (TypeRequest) intent.getExtras().get(Constants.REQUEST_TYPE_EXTRA);
+        final Bundle bundle = intent.getExtras().getBundle(Constants.CALLER_EXTRA);
+        if (bundle != null) {
+            IBinder iBinder = BundleCompat.getBinder(bundle, Constants.CALLER_EXTRA);
+            if (iBinder instanceof Rx2PhotoBinder) {
+                Rx2PhotoBinder binder = (Rx2PhotoBinder) iBinder;
+                rx2Photo = binder.rx2Photo;
+            }
+        }
 
         if(hasPermission(typeRequest)) {
             if (typeRequest == TypeRequest.GALLERY)
@@ -159,7 +191,7 @@ public class OverlapActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK && (requestCode == Constants.REQUEST_CODE_ATTACH_IMAGE || requestCode == Constants.REQUEST_CODE_TAKE_PICURE))
-            RxPhoto.onActivityResult(getUri(requestCode, data));
+            rx2Photo.onActivityResult(getUri(requestCode, data));
         finish();
     }
 }
