@@ -1,4 +1,4 @@
-# RxPhoto
+# Rx2Photo
 [![](https://jitpack.io/v/oliveiradev/RxPhoto.svg)](https://jitpack.io/#oliveiradev/RxPhoto)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RxPhoto-green.svg?style=true)](https://android-arsenal.com/details/1/3870)
 
@@ -10,7 +10,9 @@ Is very simple, when you need to get a picture of gallery or take a picture, use
 
 * Get bitmap
 ```java
-RxPhoto.requestBitmap(context, TypeRequest.GALLERY)
+
+ Rx2Photo.with(this)
+ 		.requestBitmap(TypeRequest.GALLERY)
 		// define your schedulers if necessary
 		.doOnNext((bitmap) -> { 
 			// lambda way
@@ -24,7 +26,8 @@ RxPhoto.requestBitmap(context, TypeRequest.GALLERY)
 
 * Get Uri
 ```java
-RxPhoto.requestUri(context, TypeRequest.GALLERY)
+Rx2Photo.with(this)
+		.requestUri(TypeRequest.GALLERY)
 		// define your schedulers if necessary
 		.doOnNext((uri) -> { 
 			// lambda way
@@ -38,7 +41,8 @@ RxPhoto.requestUri(context, TypeRequest.GALLERY)
 
 * Get Thumbnails
 ```java
-RxPhoto.requestThumbnails(context, TypeRequest.GALLERY,
+Rx2Photo.with(this)
+		.requestThumbnails(TypeRequest.GALLERY,
 		new Pair(60, 60), new Pair(120, 120), new Pair(240, 240))
 		// define your schedulers if necessary
 		.doOnNext((uri) -> { 
@@ -54,7 +58,8 @@ RxPhoto.requestThumbnails(context, TypeRequest.GALLERY,
 
 * Get bitmap and transform to thumbnail
 ```java
-RxPhoto.requestBitmap(context, TypeRequest.GALLERY)
+Rx2Photo.with(this)
+		.requestBitmap(TypeRequest.GALLERY)
 		// define your schedulers if necessary
 		// original bitmap
 		.doOnNext((bitmap) -> { 
