@@ -124,6 +124,20 @@ public final class Rx2Photo {
         propagateMultipleResult(uri);
     }
 
+    void propagateThrowable(Throwable error) {
+        switch (response) {
+            case BITMAP:
+            case THUMB:
+                bitmapPublishSubject.onError(error);
+                break;
+            case URI:
+                uriPublishSubject.onError(error);
+                break;
+            default:
+                break;
+        }
+    }
+
     private void propagateResult(Uri uri) {
         try {
             switch (response) {

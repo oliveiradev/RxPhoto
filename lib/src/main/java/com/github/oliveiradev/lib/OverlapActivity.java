@@ -20,6 +20,7 @@ import android.support.v4.app.BundleCompat;
 import android.support.v4.content.FileProvider;
 import android.widget.Toast;
 
+import com.github.oliveiradev.lib.exceptions.NotPermissionException;
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
 import com.github.oliveiradev.lib.util.Utils;
@@ -185,7 +186,7 @@ public class OverlapActivity extends Activity {
                     camera();
 
                 }else {
-                    Toast.makeText(this,R.string.error_camera_permission,Toast.LENGTH_LONG).show();
+                    rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
                     finish();
                 }
                 break;
@@ -195,7 +196,7 @@ public class OverlapActivity extends Activity {
                     gallery();
 
                 } else {
-                    Toast.makeText(this,R.string.error_gallery_permission,Toast.LENGTH_LONG).show();
+                    rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
                     finish();
                 }
                 break;
