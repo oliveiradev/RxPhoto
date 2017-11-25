@@ -26,8 +26,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final LinearLayout thumbsContent = (LinearLayout) findViewById(R.id.thumbs);
-        final ImageView image = (ImageView) findViewById(R.id.image);
+        final LinearLayout thumbsContent = findViewById(R.id.thumbs);
+        final ImageView image = findViewById(R.id.image);
 
         findViewById(R.id.get).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -60,6 +60,47 @@ public class MainActivity extends AppCompatActivity {
                 }
                 disposable = Rx2Photo.with(v.getContext())
                         .requestBitmap(TypeRequest.CAMERA)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .doOnNext(new Consumer<Bitmap>() {
+                            @Override
+                            public void accept(Bitmap bitmap) throws Exception {
+                                image.setImageBitmap(bitmap);
+                            }
+                        })
+                        .subscribe();
+            }
+        });
+
+        findViewById(R.id.combine).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                image.setImageBitmap(null);
+                thumbsContent.removeAllViews();
+
+                Rx2Photo.with(v.getContext())
+                        .requestBitmap(TypeRequest.COMBINE)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .doOnNext(new Consumer<Bitmap>() {
+                            @Override
+                            public void accept(Bitmap bitmap) throws Exception {
+                                image.setImageBitmap(bitmap);
+                            }
+                        })
+                        .subscribe();
+
+            }
+        });
+
+        findViewById(R.id.combine_multiple).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                image.setImageBitmap(null);
+                thumbsContent.removeAllViews();
+                if (disposable != null) {
+                    disposable.dispose();
+                }
+                disposable = Rx2Photo.with(v.getContext())
+                        .requestBitmap(TypeRequest.COMBINE_MULTIPLE)
                         .observeOn(AndroidSchedulers.mainThread())
                         .doOnNext(new Consumer<Bitmap>() {
                             @Override

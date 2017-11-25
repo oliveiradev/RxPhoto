@@ -7,6 +7,8 @@ public class Constants {
     public static final Integer IMAGE_SIZE = 1024;
     public static int REQUEST_CODE_ATTACH_IMAGE = 9123;
     public static int REQUEST_CODE_TAKE_PICURE = 9124;
+    public static int REQUEST_CODE_COMBINE = 9125;
+    public static int REQUEST_CODE_COMBINE_MULPITPLE = 9126;
     public static String REQUEST_TYPE_EXTRA = "request_type_extra";
     public static String CALLER_EXTRA = "caller_extra";
 }

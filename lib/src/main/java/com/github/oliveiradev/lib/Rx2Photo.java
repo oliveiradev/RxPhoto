@@ -13,6 +13,8 @@ import com.github.oliveiradev.lib.util.Utils;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -118,6 +120,10 @@ public final class Rx2Photo {
         }
     }
 
+    void onActivityResult(List<Uri> uri) {
+        propagateMultipleResult(uri);
+    }
+
     private void propagateResult(Uri uri) {
         try {
             switch (response) {
@@ -139,8 +145,35 @@ public final class Rx2Photo {
         }
     }
 
+    private void propagateMultipleResult(List<Uri> uri) {
+        try {
+            switch (response) {
+                case BITMAP:
+                    propagateMultipleBitmap(uri);
+                    break;
+                case URI:
+                    propagateMultipleUri(uri);
+                    break;
+                case THUMB:
+                    propagateMultipleThumbs(uri);
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            uriPublishSubject.onError(e);
+        }
+    }
+
     private void propagateUri(Uri uri) {
         uriPublishSubject.onNext(uri);
+    }
+
+    private void propagateMultipleUri(List<Uri> uri) {
+        for (Uri item : uri) {
+            uriPublishSubject.onNext(item);
+        }
     }
 
     private void propagateBitmap(final Uri uri) {
@@ -148,6 +181,23 @@ public final class Rx2Photo {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(bitmapPublishSubject);
+    }
+
+    private void propagateMultipleBitmap(final List<Uri> uri) {
+        getBitmapMultipleObservable(uri)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Function<List<Bitmap>, Boolean>() {
+                    @Override
+                    public Boolean apply(List<Bitmap> bitmaps) throws Exception {
+                        for (Bitmap item : bitmaps) {
+                            bitmapPublishSubject.onNext(item);
+                        }
+
+                        return true;
+                    }
+                })
+                .subscribe();
     }
 
     private Observable<Bitmap> getBitmapObservable(final Uri uri) {
@@ -166,6 +216,25 @@ public final class Rx2Photo {
         }).retryWhen(getRetryHandler());
     }
 
+    private Observable<List<Bitmap>> getBitmapMultipleObservable(final List<Uri> uri) {
+        return Observable.fromCallable(new Callable<List<Bitmap>>() {
+            @Override
+            public List<Bitmap> call() throws Exception {
+                try {
+                    List<Bitmap> list = new ArrayList<>();
+
+                    for (Uri item : uri) {
+                        list.add(getBitmapFromStream(item));
+                    }
+
+                    return list;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }).retryWhen(getRetryHandler());
+    }
+
     private void propagateThumbs(Uri uri) throws IOException {
         Observable
                 .combineLatest(getBitmapObservable(uri), Observable.fromArray(sizes), new BiFunction<Bitmap, Pair<Integer, Integer>, Bitmap>() {
@@ -177,6 +246,35 @@ public final class Rx2Photo {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(bitmapPublishSubject);
+    }
+
+    private void propagateMultipleThumbs(List<Uri> uri) throws IOException {
+        Observable
+                .combineLatest(getBitmapMultipleObservable(uri), Observable.fromArray(sizes), new BiFunction<List<Bitmap>, Pair<Integer, Integer>, List<Bitmap>>() {
+                    @Override
+                    public List<Bitmap> apply(List<Bitmap> bitmaps, Pair<Integer, Integer> size) throws Exception {
+                        List<Bitmap> list = new ArrayList<>();
+
+                        for (Bitmap item : bitmaps) {
+                            list.add(getThumbnail(item, size));
+                        }
+
+                        return list;
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Function<List<Bitmap>, Boolean>() {
+                    @Override
+                    public Boolean apply(List<Bitmap> bitmaps) throws Exception {
+                        for (Bitmap item : bitmaps) {
+                            bitmapPublishSubject.onNext(item);
+                        }
+
+                        return true;
+                    }
+                })
+                .subscribe();
     }
 
     private Function<? super Observable<? extends Throwable>, ? extends Observable<?>> getRetryHandler() {

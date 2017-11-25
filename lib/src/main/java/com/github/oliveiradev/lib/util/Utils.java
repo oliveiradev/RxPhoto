@@ -1,6 +1,8 @@
 package com.github.oliveiradev.lib.util;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +12,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by angelomoroni on 05/04/17.
@@ -43,8 +46,22 @@ public class Utils {
         }
     }
 
-
-
+    /**
+     * Adding multiple intents of camera and gallery
+     * @param context - current context
+     * @param list - List<Intent> for receiving incoming Intents
+     * @param intent - Intent for receive
+     */
+    public static List<Intent> addIntentsToList(Context context, List<Intent> list, Intent intent) {
+        List<ResolveInfo> resInfo = context.getPackageManager().queryIntentActivities(intent, 0);
+        for (ResolveInfo resolveInfo : resInfo) {
+            String packageName = resolveInfo.activityInfo.packageName;
+            Intent targetedIntent = new Intent(intent);
+            targetedIntent.setPackage(packageName);
+            list.add(targetedIntent);
+        }
+        return list;
+    }
 
     public static Bitmap rotate(Bitmap bitmap, float degrees) {
 
@@ -82,11 +99,9 @@ public class Utils {
 
         try {
             original = Utils.modifyOrientation(original, path);
-        }catch (IOException e){}
+        } catch (IOException e) {}
 
         return original;
-
-
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {

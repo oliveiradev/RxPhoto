@@ -2,6 +2,7 @@ package com.github.oliveiradev.lib;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,15 +13,23 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.BundleCompat;
+import android.support.v4.content.FileProvider;
 import android.widget.Toast;
 
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
+import com.github.oliveiradev.lib.util.Utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -29,6 +38,7 @@ import java.util.Locale;
 public class OverlapActivity extends Activity {
 
     private final static String FILE_URI_EXTRA = "FILE_URI";
+    private static final int REQUEST_COMBINE = 3;
     private static final int REQUEST_CAMERA = 2;
     private static final int REQUEST_GALLERY = 1;
 
@@ -80,12 +90,45 @@ public class OverlapActivity extends Activity {
         }
 
         if(hasPermission(typeRequest)) {
-            if (typeRequest == TypeRequest.GALLERY)
-                gallery();
-            else
-                camera();
+            switch (typeRequest) {
+                case GALLERY:
+                    gallery();
+                    break;
+                case CAMERA:
+                    camera();
+                    break;
+                case COMBINE:
+                    combine(false);
+                    break;
+                case COMBINE_MULTIPLE:
+                    combine(true);
+                    break;
+            }
         }else {
             requestPermission(typeRequest);
+        }
+    }
+
+    private void combine(boolean isMultiple) {
+        fileUri = createImageUri();
+        List<Intent> intentList = new ArrayList<>();
+        Intent chooserIntent = null;
+        Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, isMultiple);
+        }
+        intentList = Utils.addIntentsToList(this, intentList, pickIntent);
+        Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+        intentList = Utils.addIntentsToList(this, intentList, takePhotoIntent);
+        if (!intentList.isEmpty()) {
+            chooserIntent = Intent.createChooser(intentList.remove(intentList.size() - 1), getString(R.string.picker_header));
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentList.toArray(new Parcelable[]{}));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && isMultiple) {
+            startActivityForResult(chooserIntent, Constants.REQUEST_CODE_COMBINE_MULPITPLE);
+        } else {
+            startActivityForResult(chooserIntent, Constants.REQUEST_CODE_COMBINE);
         }
     }
 
@@ -114,12 +157,12 @@ public class OverlapActivity extends Activity {
 
                 return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
                         == PackageManager.PERMISSION_GRANTED;
-            }else {
+            } else {
                 return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
                         == PackageManager.PERMISSION_GRANTED
                         &&  checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
             }
-        }else {
+        } else {
             return true;
         }
     }
@@ -151,13 +194,11 @@ public class OverlapActivity extends Activity {
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                     gallery();
 
-                }else {
+                } else {
                     Toast.makeText(this,R.string.error_gallery_permission,Toast.LENGTH_LONG).show();
                     finish();
                 }
                 break;
-
-
         }
     }
 
@@ -181,17 +222,26 @@ public class OverlapActivity extends Activity {
         fileUri = savedInstanceState.getParcelable(FILE_URI_EXTRA);
     }
 
-    private Uri getUri(int requestCode, Intent data) {
-        if (requestCode == Constants.REQUEST_CODE_ATTACH_IMAGE) return data.getData();
-        else if (requestCode == Constants.REQUEST_CODE_TAKE_PICURE) return fileUri;
-        else return null;
-    }
-
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == Activity.RESULT_OK && (requestCode == Constants.REQUEST_CODE_ATTACH_IMAGE || requestCode == Constants.REQUEST_CODE_TAKE_PICURE))
-            rx2Photo.onActivityResult(getUri(requestCode, data));
+        if (resultCode == Activity.RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                rx2Photo.onActivityResult(data.getData());
+            } else if (data != null && data.getClipData() != null) {
+                ClipData mClipData = data.getClipData();
+                List<Uri> uris = new ArrayList<>();
+
+                for (int i = 0; i < mClipData.getItemCount(); i++) {
+                    uris.add(mClipData.getItemAt(i).getUri());
+                }
+
+                rx2Photo.onActivityResult(uris);
+            } else {
+                rx2Photo.onActivityResult(fileUri);
+            }
+        }
         finish();
     }
 }

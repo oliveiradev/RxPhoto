@@ -29,7 +29,7 @@ repositories {
 dependencies {
    // compile fileTree(dir: 'libs', include: ['*.jar'])
    // testCompile 'junit:junit:4.12'
-    implementation "io.reactivex.rxjava2:rxjava:2.1.4"
+    implementation "io.reactivex.rxjava2:rxjava:2.1.6"
     implementation "io.reactivex.rxjava2:rxandroid:2.0.1"
     compileOnly 'com.android.support:appcompat-v7:27.0.1'
 }
