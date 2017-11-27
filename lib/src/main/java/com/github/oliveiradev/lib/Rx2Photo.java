@@ -67,20 +67,20 @@ public final class Rx2Photo {
         return bitmapPublishSubject;
     }
 
-    public Rx2Photo requestUri(TypeRequest typeRequest) {
+    public Observable<Uri> requestUri(TypeRequest typeRequest) {
         response = URI;
         startOverlapActivity(typeRequest);
-        return this;
-    }
-
-    public Rx2Photo bitmapCombineTitle(String title) {
-        this.title = title;
-        return this;
-    }
-
-    public Observable<Uri> uriCombineTitle(String title) {
-        this.title = title;
         return uriPublishSubject;
+    }
+
+    public Rx2Photo titleBitmapCombine(String title) {
+        this.title = title;
+        return this;
+    }
+
+    public Rx2Photo titleUriCombine(String title) {
+        this.title = title;
+        return this;
     }
 
     @SafeVarargs
