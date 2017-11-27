@@ -36,11 +36,11 @@ import java.util.Locale;
 public class OverlapActivity extends Activity {
 
     private final static String FILE_URI_EXTRA = "FILE_URI";
-    private static final int REQUEST_COMBINE = 3;
     private static final int REQUEST_CAMERA = 2;
     private static final int REQUEST_GALLERY = 1;
 
     private Uri fileUri;
+    private TypeRequest typeRequest;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -77,7 +77,7 @@ public class OverlapActivity extends Activity {
     }
 
     private void handleIntent(Intent intent) {
-        TypeRequest typeRequest = (TypeRequest) intent.getExtras().get(Constants.REQUEST_TYPE_EXTRA);
+        typeRequest = (TypeRequest) intent.getExtras().get(Constants.REQUEST_TYPE_EXTRA);
         final Bundle bundle = intent.getExtras().getBundle(Constants.CALLER_EXTRA);
         if (bundle != null) {
             IBinder iBinder = BundleCompat.getBinder(bundle, Constants.CALLER_EXTRA);
@@ -176,36 +176,40 @@ public class OverlapActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CAMERA && typeRequest.equals(TypeRequest.CAMERA)) {
+            if(grantResults.length > 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                camera();
+            } else {
+                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
+                finish();
+            }
+        } else if (requestCode == REQUEST_GALLERY && typeRequest.equals(TypeRequest.GALLERY)) {
+            if(grantResults.length >= 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                gallery();
 
-        if (permissions.length == 2
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-            handleIntent(getIntent());
-            return;
-        }
-
-        switch (requestCode) {
-            case REQUEST_CAMERA:
-                if(grantResults.length > 1
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                        && grantResults[1] == PackageManager.PERMISSION_GRANTED){
-                    camera();
-
-                }else {
-                    rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
-                    finish();
-                }
-                break;
-            case REQUEST_GALLERY:
-                if(grantResults.length >= 1
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    gallery();
-
+            } else {
+                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
+                finish();
+            }
+        } else if (permissions.length == 2 && (typeRequest.equals(TypeRequest.COMBINE) || typeRequest.equals(TypeRequest.COMBINE_MULTIPLE))) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    if (typeRequest.equals(TypeRequest.COMBINE)) {
+                        combine(false);
+                    } else {
+                        combine(true);
+                    }
                 } else {
-                    rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
-                    finish();
+                    rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
                 }
-                break;
+            } else {
+                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
+            }
+
+            finish();
         }
     }
 
