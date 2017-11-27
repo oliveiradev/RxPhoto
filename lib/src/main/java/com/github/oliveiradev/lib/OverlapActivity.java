@@ -176,6 +176,14 @@ public class OverlapActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (permissions.length == 2
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+            handleIntent(getIntent());
+            return;
+        }
+
         switch (requestCode) {
             case REQUEST_CAMERA:
                 if(grantResults.length > 1
