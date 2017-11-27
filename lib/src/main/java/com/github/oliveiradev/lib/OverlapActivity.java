@@ -2,6 +2,7 @@ package com.github.oliveiradev.lib;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,15 +13,22 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.BundleCompat;
-import android.widget.Toast;
 
+import com.github.oliveiradev.lib.exceptions.ExternalStorageWriteException;
+import com.github.oliveiradev.lib.exceptions.NotPermissionException;
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
+import com.github.oliveiradev.lib.util.Utils;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -33,6 +41,7 @@ public class OverlapActivity extends Activity {
     private static final int REQUEST_GALLERY = 1;
 
     private Uri fileUri;
+    private TypeRequest typeRequest;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -69,7 +78,7 @@ public class OverlapActivity extends Activity {
     }
 
     private void handleIntent(Intent intent) {
-        TypeRequest typeRequest = (TypeRequest) intent.getExtras().get(Constants.REQUEST_TYPE_EXTRA);
+        typeRequest = (TypeRequest) intent.getExtras().get(Constants.REQUEST_TYPE_EXTRA);
         final Bundle bundle = intent.getExtras().getBundle(Constants.CALLER_EXTRA);
         if (bundle != null) {
             IBinder iBinder = BundleCompat.getBinder(bundle, Constants.CALLER_EXTRA);
@@ -80,12 +89,51 @@ public class OverlapActivity extends Activity {
         }
 
         if(hasPermission(typeRequest)) {
-            if (typeRequest == TypeRequest.GALLERY)
-                gallery();
-            else
-                camera();
+            switch (typeRequest) {
+                case GALLERY:
+                    gallery();
+                    break;
+                case CAMERA:
+                    camera();
+                    break;
+                case COMBINE:
+                    combine(false);
+                    break;
+                case COMBINE_MULTIPLE:
+                    combine(true);
+                    break;
+            }
         }else {
             requestPermission(typeRequest);
+        }
+    }
+
+    private void combine(boolean isMultiple) {
+        if (!Utils.isExternalStorageWritable()) {
+            rx2Photo.propagateThrowable(new ExternalStorageWriteException());
+            return;
+        }
+
+        fileUri = createImageUri();
+        List<Intent> intentList = new ArrayList<>();
+        Intent chooserIntent = null;
+        Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, isMultiple);
+        }
+        intentList = Utils.addIntentsToList(this, intentList, pickIntent);
+        Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+        intentList = Utils.addIntentsToList(this, intentList, takePhotoIntent);
+        if (!intentList.isEmpty()) {
+            String title = rx2Photo.getTitle() != null ? rx2Photo.getTitle() : getString(R.string.picker_header);
+            chooserIntent = Intent.createChooser(intentList.remove(intentList.size() - 1), title);
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentList.toArray(new Parcelable[]{}));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && isMultiple) {
+            startActivityForResult(chooserIntent, Constants.REQUEST_CODE_COMBINE_MULPITPLE);
+        } else {
+            startActivityForResult(chooserIntent, Constants.REQUEST_CODE_COMBINE);
         }
     }
 
@@ -101,11 +149,14 @@ public class OverlapActivity extends Activity {
     private void camera() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            if (!Utils.isExternalStorageWritable()) {
+                rx2Photo.propagateThrowable(new ExternalStorageWriteException());
+                return;
+            }
             fileUri = createImageUri();
             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
             startActivityForResult(takePictureIntent, Constants.REQUEST_CODE_TAKE_PICURE);
         }
-
     }
 
     private boolean hasPermission(TypeRequest typeRequest) {
@@ -114,12 +165,12 @@ public class OverlapActivity extends Activity {
 
                 return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
                         == PackageManager.PERMISSION_GRANTED;
-            }else {
+            } else {
                 return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
                         == PackageManager.PERMISSION_GRANTED
                         &&  checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
             }
-        }else {
+        } else {
             return true;
         }
     }
@@ -132,33 +183,51 @@ public class OverlapActivity extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case REQUEST_CAMERA:
-                if(grantResults.length > 1
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                        && grantResults[1] == PackageManager.PERMISSION_GRANTED){
-                    camera();
+        if (requestCode == REQUEST_CAMERA && typeRequest.equals(TypeRequest.CAMERA)) {
+            if(grantResults.length > 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                camera();
+            } else {
+                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
+                finish();
+            }
+        } else if (requestCode == REQUEST_GALLERY && typeRequest.equals(TypeRequest.GALLERY)) {
+            if(grantResults.length >= 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                gallery();
 
-                }else {
-                    Toast.makeText(this,R.string.error_camera_permission,Toast.LENGTH_LONG).show();
-                    finish();
+            } else {
+                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
+                finish();
+            }
+        } else if (permissions.length == 2 && (typeRequest.equals(TypeRequest.COMBINE) || typeRequest.equals(TypeRequest.COMBINE_MULTIPLE))) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    if (typeRequest.equals(TypeRequest.COMBINE)) {
+                        combine(false);
+                    } else {
+                        combine(true);
+                    }
+                } else {
+                    rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
                 }
-                break;
-            case REQUEST_GALLERY:
-                if(grantResults.length >= 1
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    gallery();
+            } else {
+                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
+            }
 
-                }else {
-                    Toast.makeText(this,R.string.error_gallery_permission,Toast.LENGTH_LONG).show();
-                    finish();
-                }
-                break;
-
-
+            finish();
         }
+    }
+
+    /**
+     * If we not choose camera, temp file is unused and must be removed
+     */
+    private void removeUnusedFile() {
+        if (fileUri != null)
+            getContentResolver().delete(fileUri, null, null);
     }
 
     private Uri createImageUri() {
@@ -181,17 +250,29 @@ public class OverlapActivity extends Activity {
         fileUri = savedInstanceState.getParcelable(FILE_URI_EXTRA);
     }
 
-    private Uri getUri(int requestCode, Intent data) {
-        if (requestCode == Constants.REQUEST_CODE_ATTACH_IMAGE) return data.getData();
-        else if (requestCode == Constants.REQUEST_CODE_TAKE_PICURE) return fileUri;
-        else return null;
-    }
-
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == Activity.RESULT_OK && (requestCode == Constants.REQUEST_CODE_ATTACH_IMAGE || requestCode == Constants.REQUEST_CODE_TAKE_PICURE))
-            rx2Photo.onActivityResult(getUri(requestCode, data));
+        if (resultCode == Activity.RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                rx2Photo.onActivityResult(data.getData());
+                removeUnusedFile();
+            } else if (data != null && data.getClipData() != null) {
+                ClipData mClipData = data.getClipData();
+                List<Uri> uris = new ArrayList<>();
+
+                for (int i = 0; i < mClipData.getItemCount(); i++) {
+                    uris.add(mClipData.getItemAt(i).getUri());
+                }
+
+                rx2Photo.onActivityResult(uris);
+            } else {
+                rx2Photo.onActivityResult(fileUri);
+            }
+        } else {
+            removeUnusedFile();
+        }
         finish();
     }
 }

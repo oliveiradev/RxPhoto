@@ -42,6 +42,26 @@
 
 
         <Button
+            android:id="@+id/combine"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_combine" />
+
+        <Button
+            android:id="@+id/combine_multiple"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_combine_multiple" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+
+        <Button
             android:id="@+id/transform"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
