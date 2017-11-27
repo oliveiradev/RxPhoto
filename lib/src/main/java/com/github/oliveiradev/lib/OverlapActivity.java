@@ -19,6 +19,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.BundleCompat;
 
+import com.github.oliveiradev.lib.exceptions.CancelOperationException;
 import com.github.oliveiradev.lib.exceptions.ExternalStorageWriteException;
 import com.github.oliveiradev.lib.exceptions.NotPermissionException;
 import com.github.oliveiradev.lib.shared.Constants;
@@ -226,26 +227,48 @@ public class OverlapActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (resultCode == Activity.RESULT_OK) {
-            if (data != null && data.getData() != null && data.getClipData() != null && data.getClipData().getItemCount() == 1) {
-                rx2Photo.onActivityResult(data.getData());
-                removeUnusedFile();
-            } else if (data != null && data.getClipData() != null) {
-                ClipData mClipData = data.getClipData();
-                List<Uri> uris = new ArrayList<>();
+            switch (typeRequest) {
+                case COMBINE_MULTIPLE:
+                    if (data != null && data.getClipData() != null) {
+                        ClipData mClipData = data.getClipData();
+                        List<Uri> uris = new ArrayList<>();
 
-                for (int i = 0; i < mClipData.getItemCount(); i++) {
-                    uris.add(mClipData.getItemAt(i).getUri());
-                }
+                        for (int i = 0; i < mClipData.getItemCount(); i++) {
+                            uris.add(mClipData.getItemAt(i).getUri());
+                        }
 
-                rx2Photo.onActivityResult(uris);
-                removeUnusedFile();
-            } else {
-                rx2Photo.onActivityResult(fileUri);
+                        rx2Photo.onActivityResult(uris);
+
+                        removeUnusedFile();
+                    } else if (data != null && data.getData() != null) {
+                        List<Uri> uris = new ArrayList<>();
+                        uris.add(data.getData());
+                        rx2Photo.onActivityResult(uris);
+
+                        removeUnusedFile();
+                    } else {
+                        rx2Photo.onActivityResult(fileUri);
+                    }
+                    break;
+                case CAMERA:
+                    rx2Photo.onActivityResult(fileUri);
+                    break;
+                case GALLERY:
+                case COMBINE:
+                    if (data != null && data.getData() != null) {
+                        rx2Photo.onActivityResult(data.getData());
+                        removeUnusedFile();
+                    } else {
+                        rx2Photo.onActivityResult(fileUri);
+                    }
+                    break;
             }
         } else {
-            removeUnusedFile();
+            rx2Photo.propagateThrowable(new CancelOperationException(typeRequest));
         }
+
         finish();
     }
 }

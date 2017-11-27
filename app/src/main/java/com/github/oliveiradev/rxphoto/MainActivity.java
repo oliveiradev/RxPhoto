@@ -1,8 +1,10 @@
 package com.github.oliveiradev.rxphoto;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
@@ -10,6 +12,8 @@ import android.widget.LinearLayout;
 
 import com.github.oliveiradev.lib.Rx2Photo;
 import com.github.oliveiradev.lib.shared.TypeRequest;
+
+import java.util.List;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -38,15 +42,17 @@ public class MainActivity extends AppCompatActivity {
                 Rx2Photo.with(v.getContext())
                         .requestBitmap(TypeRequest.GALLERY, 300, 300)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Consumer<Bitmap>() {
+                        .subscribe(new Consumer<Bitmap>() {
                             @Override
                             public void accept(Bitmap bitmap) throws Exception {
                                 image.setImageBitmap(bitmap);
                             }
-                        })
-                        .subscribe();
-
-
+                        }, new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Exception {
+                                Log.e("TAG", throwable.getMessage(), throwable);
+                            }
+                        });
             }
         });
 
@@ -61,13 +67,17 @@ public class MainActivity extends AppCompatActivity {
                 disposable = Rx2Photo.with(v.getContext())
                         .requestBitmap(TypeRequest.CAMERA)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Consumer<Bitmap>() {
+                        .subscribe(new Consumer<Bitmap>() {
                             @Override
                             public void accept(Bitmap bitmap) throws Exception {
                                 image.setImageBitmap(bitmap);
                             }
-                        })
-                        .subscribe();
+                        }, new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Exception {
+                                Log.e("TAG", throwable.getMessage(), throwable);
+                            }
+                        });
             }
         });
 
@@ -81,13 +91,17 @@ public class MainActivity extends AppCompatActivity {
                         .titleCombine("Custom chooser title")
                         .requestBitmap(TypeRequest.COMBINE)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Consumer<Bitmap>() {
+                        .subscribe(new Consumer<Bitmap>() {
                             @Override
                             public void accept(Bitmap bitmap) throws Exception {
                                 image.setImageBitmap(bitmap);
                             }
-                        })
-                        .subscribe();
+                        }, new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Exception {
+                                Log.e("TAG", throwable.getMessage(), throwable);
+                            }
+                        });
             }
         });
 
@@ -100,15 +114,19 @@ public class MainActivity extends AppCompatActivity {
                     disposable.dispose();
                 }
                 disposable = Rx2Photo.with(v.getContext())
-                        .requestBitmap(TypeRequest.COMBINE_MULTIPLE)
+                        .requestMultiUri()
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Consumer<Bitmap>() {
+                        .subscribe(new Consumer<List<Uri>>() {
                             @Override
-                            public void accept(Bitmap bitmap) throws Exception {
-                                image.setImageBitmap(bitmap);
+                            public void accept(List<Uri> bitmap) throws Exception {
+                                Log.d("TAG", String.valueOf(bitmap.size()));
                             }
-                        })
-                        .subscribe();
+                        }, new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Exception {
+                                Log.e("TAG", throwable.getMessage(), throwable);
+                            }
+                        });
             }
         });
 
@@ -123,17 +141,21 @@ public class MainActivity extends AppCompatActivity {
                 disposable = Rx2Photo.with(v.getContext())
                         .requestThumbnails(TypeRequest.GALLERY, new Pair(60, 60), new Pair(120, 120), new Pair(240, 240))
                         .observeOn(AndroidSchedulers.mainThread())
-                        .doOnNext(new Consumer<Bitmap>() {
+                        .subscribe(new Consumer<Bitmap>() {
                             @Override
                             public void accept(Bitmap bitmap) throws Exception {
                                 final ImageView newImage = new ImageView(MainActivity.this);
                                 newImage.setImageBitmap(bitmap);
-                                newImage.setPadding(10,10,10,10);
+                                newImage.setPadding(10, 10, 10, 10);
                                 thumbsContent.addView(newImage);
 
                             }
-                        })
-                        .subscribe();
+                        }, new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Exception {
+                                Log.e("TAG", throwable.getMessage(), throwable);
+                            }
+                        });
             }
         });
 
@@ -150,16 +172,20 @@ public class MainActivity extends AppCompatActivity {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .flatMap(Rx2Photo.transformToThumbnail(new Pair(240, 240), new Pair(120, 120), new Pair(60, 60)))
-                        .doOnNext(new Consumer<Bitmap>() {
+                        .subscribe(new Consumer<Bitmap>() {
                             @Override
                             public void accept(Bitmap bitmap) throws Exception {
                                 final ImageView newImage = new ImageView(MainActivity.this);
                                 newImage.setImageBitmap(bitmap);
-                                newImage.setPadding(10,10,10,10);
+                                newImage.setPadding(10, 10, 10, 10);
                                 thumbsContent.addView(newImage);
                             }
-                        })
-                        .subscribe();
+                        }, new Consumer<Throwable>() {
+                            @Override
+                            public void accept(Throwable throwable) throws Exception {
+                                Log.e("TAG", throwable.getMessage(), throwable);
+                            }
+                        });
             }
         });
     }

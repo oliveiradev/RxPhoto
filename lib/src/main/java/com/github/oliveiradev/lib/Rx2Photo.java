@@ -39,6 +39,9 @@ public final class Rx2Photo {
 
     private final PublishSubject<Bitmap> bitmapPublishSubject = PublishSubject.create();
     private final PublishSubject<Uri> uriPublishSubject = PublishSubject.create();
+    private final PublishSubject<List<Bitmap>> bitmapMultiPublishSubject = PublishSubject.create();
+    private final PublishSubject<List<Uri>> uriMultiPublishSubject = PublishSubject.create();
+
     private Pair<Integer, Integer>[] sizes;
     private Pair<Integer, Integer> bitmapSizes;
     private ResponseType response;
@@ -61,6 +64,14 @@ public final class Rx2Photo {
         return requestBitmap(typeRequest,new Pair<>(width,height));
     }
 
+    public Observable<List<Bitmap>> requestMultiBitmap() {
+        return requestMultiBitmap(new Pair<>(Constants.IMAGE_SIZE,Constants.IMAGE_SIZE));
+    }
+
+    public Observable<List<Bitmap>> requestMultiBitmap(Integer width, Integer height) {
+        return requestMultiBitmap(new Pair<>(width,height));
+    }
+
     public Observable<Bitmap> requestBitmap(TypeRequest typeRequest,Pair<Integer,Integer> bitmapSize) {
         response = BITMAP;
         startOverlapActivity(typeRequest);
@@ -72,6 +83,19 @@ public final class Rx2Photo {
         response = URI;
         startOverlapActivity(typeRequest);
         return uriPublishSubject;
+    }
+
+    public Observable<List<Bitmap>> requestMultiBitmap(Pair<Integer, Integer> bitmapSize) {
+        response = BITMAP;
+        startOverlapActivity(TypeRequest.COMBINE_MULTIPLE);
+        this.bitmapSizes = bitmapSize;
+        return bitmapMultiPublishSubject;
+    }
+
+    public Observable<List<Uri>> requestMultiUri() {
+        response = URI;
+        startOverlapActivity(TypeRequest.COMBINE_MULTIPLE);
+        return uriMultiPublishSubject;
     }
 
     /**
@@ -163,9 +187,11 @@ public final class Rx2Photo {
         switch (response) {
             case BITMAP:
             case THUMB:
+                bitmapMultiPublishSubject.onError(error);
                 bitmapPublishSubject.onError(error);
                 break;
             case URI:
+                uriMultiPublishSubject.onError(error);
                 uriPublishSubject.onError(error);
                 break;
             default:
@@ -228,9 +254,7 @@ public final class Rx2Photo {
     }
 
     private void propagateMultipleUri(List<Uri> uri) {
-        for (Uri item : uri) {
-            uriPublishSubject.onNext(item);
-        }
+        uriMultiPublishSubject.onNext(uri);
     }
 
     private void propagateBitmap(final Uri uri) {
@@ -244,17 +268,7 @@ public final class Rx2Photo {
         getBitmapMultipleObservable(uri)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .map(new Function<List<Bitmap>, Boolean>() {
-                    @Override
-                    public Boolean apply(List<Bitmap> bitmaps) throws Exception {
-                        for (Bitmap item : bitmaps) {
-                            bitmapPublishSubject.onNext(item);
-                        }
-
-                        return true;
-                    }
-                })
-                .subscribe();
+                .subscribe(bitmapMultiPublishSubject);
     }
 
     private Observable<Bitmap> getBitmapObservable(final Uri uri) {
@@ -324,9 +338,7 @@ public final class Rx2Photo {
                 .map(new Function<List<Bitmap>, Boolean>() {
                     @Override
                     public Boolean apply(List<Bitmap> bitmaps) throws Exception {
-                        for (Bitmap item : bitmaps) {
-                            bitmapPublishSubject.onNext(item);
-                        }
+                        bitmapMultiPublishSubject.onNext(bitmaps);
 
                         return true;
                     }
