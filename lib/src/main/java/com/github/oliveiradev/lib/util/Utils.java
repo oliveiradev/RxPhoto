@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 
@@ -62,6 +63,15 @@ public class Utils {
             list.add(targetedIntent);
         }
         return list;
+    }
+
+    /**
+     * Is external storage available for write
+     * @return - is available
+     */
+    public static boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state);
     }
 
     private static Bitmap rotate(Bitmap bitmap, float degrees) {

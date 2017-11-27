@@ -19,6 +19,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.BundleCompat;
 
+import com.github.oliveiradev.lib.exceptions.ExternalStorageWriteException;
 import com.github.oliveiradev.lib.exceptions.NotPermissionException;
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
@@ -108,6 +109,11 @@ public class OverlapActivity extends Activity {
     }
 
     private void combine(boolean isMultiple) {
+        if (!Utils.isExternalStorageWritable()) {
+            rx2Photo.propagateThrowable(new ExternalStorageWriteException());
+            return;
+        }
+
         fileUri = createImageUri();
         List<Intent> intentList = new ArrayList<>();
         Intent chooserIntent = null;
@@ -143,11 +149,14 @@ public class OverlapActivity extends Activity {
     private void camera() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            if (!Utils.isExternalStorageWritable()) {
+                rx2Photo.propagateThrowable(new ExternalStorageWriteException());
+                return;
+            }
             fileUri = createImageUri();
             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
             startActivityForResult(takePictureIntent, Constants.REQUEST_CODE_TAKE_PICURE);
         }
-
     }
 
     private boolean hasPermission(TypeRequest typeRequest) {
@@ -213,6 +222,14 @@ public class OverlapActivity extends Activity {
         }
     }
 
+    /**
+     * If we not choose camera, temp file is unused and must be removed
+     */
+    private void removeUnusedFile() {
+        if (fileUri != null)
+            getContentResolver().delete(fileUri, null, null);
+    }
+
     private Uri createImageUri() {
         ContentResolver contentResolver = getContentResolver();
         ContentValues cv = new ContentValues();
@@ -240,6 +257,7 @@ public class OverlapActivity extends Activity {
         if (resultCode == Activity.RESULT_OK) {
             if (data != null && data.getData() != null) {
                 rx2Photo.onActivityResult(data.getData());
+                removeUnusedFile();
             } else if (data != null && data.getClipData() != null) {
                 ClipData mClipData = data.getClipData();
                 List<Uri> uris = new ArrayList<>();
@@ -252,6 +270,8 @@ public class OverlapActivity extends Activity {
             } else {
                 rx2Photo.onActivityResult(fileUri);
             }
+        } else {
+            removeUnusedFile();
         }
         finish();
     }

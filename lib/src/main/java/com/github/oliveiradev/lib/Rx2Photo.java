@@ -6,6 +6,7 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
 import android.util.Pair;
 
 import com.github.oliveiradev.lib.shared.Constants;
@@ -73,13 +74,23 @@ public final class Rx2Photo {
         return uriPublishSubject;
     }
 
-    public Rx2Photo titleBitmapCombine(String title) {
+    /**
+     * Adding title to intent chooser on string
+     * @param title - title in string
+     * @return - parent class
+     */
+    public Rx2Photo titleCombine(String title) {
         this.title = title;
         return this;
     }
 
-    public Rx2Photo titleUriCombine(String title) {
-        this.title = title;
+    /**
+     * Adding title to intent chooser on resource id
+     * @param titleId - title in resources id
+     * @return - parent class
+     */
+    public Rx2Photo titleCombine(@StringRes int titleId) {
+        this.title = contextWeakReference.get().getString(titleId);
         return this;
     }
 
@@ -108,6 +119,10 @@ public final class Rx2Photo {
         };
     }
 
+    /**
+     * Start activity for action
+     * @param typeRequest - selected request
+     */
     private void startOverlapActivity(TypeRequest typeRequest) {
         final Context context = contextWeakReference.get();
         if (context == null) return;
@@ -140,6 +155,10 @@ public final class Rx2Photo {
         propagateMultipleResult(uri);
     }
 
+    /**
+     * Handle throwable from activity
+     * @param error - throwable
+     */
     void propagateThrowable(Throwable error) {
         switch (response) {
             case BITMAP:
@@ -154,6 +173,10 @@ public final class Rx2Photo {
         }
     }
 
+    /**
+     * Handle result from activity
+     * @param uri - uri-result
+     */
     private void propagateResult(Uri uri) {
         try {
             switch (response) {
@@ -175,6 +198,10 @@ public final class Rx2Photo {
         }
     }
 
+    /**
+     * Handle multiple result from activity
+     * @param uri - uri item from activity
+     */
     private void propagateMultipleResult(List<Uri> uri) {
         try {
             switch (response) {

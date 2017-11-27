@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 thumbsContent.removeAllViews();
 
                 Rx2Photo.with(v.getContext())
-                        .titleUriCombine("Custom chooser title")
+                        .titleCombine("Custom chooser title")
                         .requestBitmap(TypeRequest.COMBINE)
                         .observeOn(AndroidSchedulers.mainThread())
                         .doOnNext(new Consumer<Bitmap>() {
