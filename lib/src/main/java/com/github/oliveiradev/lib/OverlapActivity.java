@@ -15,18 +15,15 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.BundleCompat;
-import android.support.v4.content.FileProvider;
-import android.widget.Toast;
 
 import com.github.oliveiradev.lib.exceptions.NotPermissionException;
 import com.github.oliveiradev.lib.shared.Constants;
 import com.github.oliveiradev.lib.shared.TypeRequest;
 import com.github.oliveiradev.lib.util.Utils;
 
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -123,7 +120,8 @@ public class OverlapActivity extends Activity {
         takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
         intentList = Utils.addIntentsToList(this, intentList, takePhotoIntent);
         if (!intentList.isEmpty()) {
-            chooserIntent = Intent.createChooser(intentList.remove(intentList.size() - 1), getString(R.string.picker_header));
+            String title = rx2Photo.getTitle() != null ? rx2Photo.getTitle() : getString(R.string.picker_header);
+            chooserIntent = Intent.createChooser(intentList.remove(intentList.size() - 1), title);
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentList.toArray(new Parcelable[]{}));
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && isMultiple) {
@@ -176,7 +174,7 @@ public class OverlapActivity extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_CAMERA:
