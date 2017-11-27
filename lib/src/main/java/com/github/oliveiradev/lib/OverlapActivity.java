@@ -37,7 +37,6 @@ import java.util.Locale;
 public class OverlapActivity extends Activity {
 
     private final static String FILE_URI_EXTRA = "FILE_URI";
-    private static final int REQUEST_CAMERA = 2;
     private static final int REQUEST_GALLERY = 1;
 
     private Uri fileUri;
@@ -88,7 +87,7 @@ public class OverlapActivity extends Activity {
             }
         }
 
-        if(hasPermission(typeRequest)) {
+        if (hasPermission()) {
             switch (typeRequest) {
                 case GALLERY:
                     gallery();
@@ -103,8 +102,8 @@ public class OverlapActivity extends Activity {
                     combine(true);
                     break;
             }
-        }else {
-            requestPermission(typeRequest);
+        } else {
+            requestPermission();
         }
     }
 
@@ -159,66 +158,39 @@ public class OverlapActivity extends Activity {
         }
     }
 
-    private boolean hasPermission(TypeRequest typeRequest) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if(typeRequest == TypeRequest.GALLERY){
-
-                return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
-                        == PackageManager.PERMISSION_GRANTED;
-            } else {
-                return checkSelfPermission( Manifest.permission.WRITE_EXTERNAL_STORAGE )
-                        == PackageManager.PERMISSION_GRANTED
-                        &&  checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-            }
-        } else {
-            return true;
-        }
+    private boolean hasPermission() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void requestPermission(TypeRequest typeRequest){
+    private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{typeRequest == TypeRequest.GALLERY ? Manifest.permission.WRITE_EXTERNAL_STORAGE : Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    typeRequest == TypeRequest.GALLERY ? REQUEST_GALLERY : REQUEST_CAMERA );
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_GALLERY);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CAMERA && typeRequest.equals(TypeRequest.CAMERA)) {
-            if(grantResults.length > 1
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[1] == PackageManager.PERMISSION_GRANTED){
-                camera();
-            } else {
-                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
-                finish();
-            }
-        } else if (requestCode == REQUEST_GALLERY && typeRequest.equals(TypeRequest.GALLERY)) {
-            if(grantResults.length >= 1
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                gallery();
 
-            } else {
-                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
-                finish();
-            }
-        } else if (permissions.length == 2 && (typeRequest.equals(TypeRequest.COMBINE) || typeRequest.equals(TypeRequest.COMBINE_MULTIPLE))) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                    if (typeRequest.equals(TypeRequest.COMBINE)) {
-                        combine(false);
-                    } else {
-                        combine(true);
-                    }
-                } else {
-                    rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.CAMERA));
-                }
-            } else {
-                rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
-            }
-
+        if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+            rx2Photo.propagateThrowable(new NotPermissionException(NotPermissionException.RequestEnum.GALLERY));
             finish();
+            return;
+        }
+
+        switch (typeRequest) {
+            case CAMERA:
+                camera();
+                break;
+            case GALLERY:
+                gallery();
+                break;
+            case COMBINE:
+                combine(false);
+                break;
+            case COMBINE_MULTIPLE:
+                combine(true);
+                break;
         }
     }
 
