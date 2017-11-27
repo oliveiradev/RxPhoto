@@ -227,7 +227,7 @@ public class OverlapActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == Activity.RESULT_OK) {
-            if (data != null && data.getData() != null) {
+            if (data != null && data.getData() != null && data.getClipData() != null && data.getClipData().getItemCount() == 1) {
                 rx2Photo.onActivityResult(data.getData());
                 removeUnusedFile();
             } else if (data != null && data.getClipData() != null) {
@@ -239,6 +239,7 @@ public class OverlapActivity extends Activity {
                 }
 
                 rx2Photo.onActivityResult(uris);
+                removeUnusedFile();
             } else {
                 rx2Photo.onActivityResult(fileUri);
             }
