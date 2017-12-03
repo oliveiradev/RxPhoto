@@ -9,7 +9,6 @@
         <activity
             android:name=".OverlapActivity"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            />
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 </manifest>
