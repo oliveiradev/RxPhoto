@@ -208,6 +208,10 @@ open class OverlapActivity: Activity() {
                     rx2Photo.onActivityResult(uris)
 
                     removeUnusedFile()
+                } else if (fileUri != null) {
+                    val uris = listOf(fileUri!!)
+
+                    rx2Photo.onActivityResult(uris)
                 } else {
                     rx2Photo.onActivityResult(fileUri)
                 }
