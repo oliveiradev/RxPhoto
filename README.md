@@ -73,6 +73,23 @@ Rx2Photo.with(this)
 
 ```
 
+* Get multiple images URI from camera or gallery (combine variant)
+```java
+Rx2Photo.with(this)
+		.titleCombine(R.string.combine_title)
+		.requestMultiUri()		// implicitly call multi-pick (API 18+), or call just COMBINE_MULTIPLE
+		// define your schedulers if necessary
+		.doOnNext((uri) -> { 
+			// that guy go propagate call three times, the number of your sizes
+			// lambda way
+          		//your uri picture
+       		})
+		.subscribe();
+
+
+
+```
+
 * Get bitmap and transform to thumbnail
 ```java
 Rx2Photo.with(this)
