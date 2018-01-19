@@ -7,10 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Binder
-import android.os.Build
-import android.os.Bundle
-import android.os.Parcelable
+import android.os.*
 import android.provider.MediaStore
 import android.support.annotation.RequiresApi
 import android.support.v4.app.BundleCompat
@@ -31,6 +28,7 @@ open class OverlapActivity: Activity() {
     companion object {
         private const val FILE_URI_EXTRA = "FILE_URI"
         private const val REQUEST_GALLERY = 1
+        private const val BUNDLE = "bundle"
 
         fun newIntent(context: Context, typeRequest: TypeRequest, caller: Rx2Photo): Intent {
             val intent = Intent(context, OverlapActivity::class.java)
@@ -173,11 +171,22 @@ open class OverlapActivity: Activity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putParcelable(FILE_URI_EXTRA, fileUri)
+        outState.putParcelable(BUNDLE, intent.extras)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         fileUri = savedInstanceState.getParcelable(FILE_URI_EXTRA)
+
+        val bundle = savedInstanceState.getParcelable(BUNDLE) as Bundle
+        typeRequest = bundle.get(Constants.REQUEST_TYPE_EXTRA) as TypeRequest
+        val caller = bundle.getBundle(Constants.CALLER_EXTRA)
+        if (caller != null) {
+            val iBinder = BundleCompat.getBinder(caller, Constants.CALLER_EXTRA)
+            if (iBinder is Rx2PhotoBinder) {
+                rx2Photo = iBinder.rx2Photo
+            }
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
@@ -199,6 +208,10 @@ open class OverlapActivity: Activity() {
                     rx2Photo.onActivityResult(uris)
 
                     removeUnusedFile()
+                } else if (fileUri != null) {
+                    val uris = listOf(fileUri!!)
+
+                    rx2Photo.onActivityResult(uris)
                 } else {
                     rx2Photo.onActivityResult(fileUri)
                 }

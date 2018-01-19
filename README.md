@@ -1,5 +1,5 @@
 # Rx2Photo
-[![](https://jitpack.io/v/oliveiradev/RxPhoto.svg)](https://jitpack.io/#oliveiradev/RxPhoto)
+[![](https://jitpack.io/v/GeniusRUS/RxPhoto.svg)](https://jitpack.io/#GeniusRUS/RxPhoto)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RxPhoto-green.svg?style=true)](https://android-arsenal.com/details/1/3870)
 
 A simple library for delivery bitmaps using reactive approach.
@@ -49,6 +49,40 @@ Rx2Photo.with(this)
 			// that guy go propagate call three times, the number of your sizes
 			// lambda way
           		//your picture in bitmap format
+       		})
+		.subscribe();
+
+
+
+```
+
+* Get image URI from camera or gallery (combine variant)
+```java
+Rx2Photo.with(this)
+		.titleCombine(R.string.combine_title)
+		.requestURI(TypeRequest.COMBINE)	// or COMBINE_MULTIPLE - multi-pick (API 18+)
+		// define your schedulers if necessary
+		.doOnNext((uri) -> { 
+			// that guy go propagate call three times, the number of your sizes
+			// lambda way
+          		//your uri picture
+       		})
+		.subscribe();
+
+
+
+```
+
+* Get multiple images URI from camera or gallery (combine variant)
+```java
+Rx2Photo.with(this)
+		.titleCombine(R.string.combine_title)
+		.requestMultiUri()		// implicitly call multi-pick (API 18+), or call just COMBINE_MULTIPLE
+		// define your schedulers if necessary
+		.doOnNext((uri) -> { 
+			// that guy go propagate call three times, the number of your sizes
+			// lambda way
+          		//your uri picture
        		})
 		.subscribe();
 
