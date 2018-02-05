@@ -10,6 +10,7 @@ import com.github.oliveiradev.lib.shared.Constants
 import com.github.oliveiradev.lib.shared.ResponseType
 import com.github.oliveiradev.lib.shared.ResponseType.*
 import com.github.oliveiradev.lib.shared.TypeRequest
+import com.github.oliveiradev.lib.util.FileUtils
 import com.github.oliveiradev.lib.util.Utils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -33,8 +34,10 @@ open class Rx2Photo(private val context: Context) {
     private var bitmapSizes: Pair<Int, Int>? = null
     private var bitmapPublishSubject: PublishSubject<Bitmap>? = null
     private var uriPublishSubject: PublishSubject<Uri>? = null
+    private var pathPublishSubject: PublishSubject<String>? = null
     private var bitmapMultiPublishSubject: PublishSubject<List<Bitmap>>? = null
     private var uriMultiPublishSubject: PublishSubject<List<Uri>>? = null
+    private var pathMultiPublishSubject: PublishSubject<List<String>>? = null
     private lateinit var response: ResponseType
 
     var title: String? = null
@@ -140,6 +143,18 @@ open class Rx2Photo(private val context: Context) {
     }
 
     /**
+     * Request for single path of file
+     * @param typeRequest - selected source for emitter
+     * @return - observable that emits a single path
+     */
+    fun requestPath(typeRequest: TypeRequest): Observable<String> {
+        response = PATH
+        startOverlapActivity(typeRequest)
+        pathPublishSubject = PublishSubject.create()
+        return pathPublishSubject as PublishSubject<String>
+    }
+
+    /**
      * Request for list of bitmaps with explicitly set of size
      * @param bitmapSize - requested bitmap scale size
      * @return - explicitly scaled or not (1024 by default) bitmap
@@ -161,6 +176,17 @@ open class Rx2Photo(private val context: Context) {
         startOverlapActivity(TypeRequest.COMBINE_MULTIPLE)
         uriMultiPublishSubject = PublishSubject.create()
         return uriMultiPublishSubject as PublishSubject<List<Uri>>
+    }
+
+    /**
+     * Request for list of paths
+     * @return - observable that emits a list of paths
+     */
+    fun requestMultiPath(): Observable<List<String>> {
+        response = PATH
+        startOverlapActivity(TypeRequest.COMBINE_MULTIPLE)
+        pathMultiPublishSubject = PublishSubject.create()
+        return pathMultiPublishSubject as PublishSubject<List<String>>
     }
 
     /**
@@ -251,6 +277,10 @@ open class Rx2Photo(private val context: Context) {
                 uriMultiPublishSubject?.onError(error)
                 uriPublishSubject?.onError(error)
             }
+            PATH -> {
+                pathMultiPublishSubject?.onError(error)
+                pathPublishSubject?.onError(error)
+            }
         }
     }
 
@@ -264,6 +294,7 @@ open class Rx2Photo(private val context: Context) {
                 BITMAP -> propagateBitmap(uri)
                 URI -> propagateUri(uri)
                 THUMB -> propagateThumbs(uri)
+                PATH -> propagatePath(uri)
             }
         } catch (e: Exception) {
             uriPublishSubject?.onError(e)
@@ -281,6 +312,7 @@ open class Rx2Photo(private val context: Context) {
                 BITMAP -> propagateMultipleBitmap(uris)
                 URI -> propagateMultipleUri(uris)
                 THUMB -> propagateMultipleThumbs(uris)
+                PATH -> propagateMultiplePaths(uris)
             }
         } catch (e: Exception) {
             uriPublishSubject?.onError(e)
@@ -297,11 +329,33 @@ open class Rx2Photo(private val context: Context) {
     }
 
     /**
+     * Handle single result from activity
+     * @param uri - uri item from activity
+     */
+    private fun propagatePath(uri: Uri) {
+        pathPublishSubject?.onNext(FileUtils.getPath(context, uri))
+    }
+
+    /**
      * Handle multiple result from activity
      * @param uris - uris items from activity
      */
     private fun propagateMultipleUri(uris: List<Uri>) {
         uriMultiPublishSubject?.onNext(uris)
+    }
+
+    /**
+     * Handle result list of paths from activity
+     * @param uris - uris of path image activity
+     */
+    private fun propagateMultiplePaths(uris: List<Uri>) {
+        pathMultiPublishSubject?.let {
+            Observable.just(uris)
+                .map { it.map { FileUtils.getPath(context, it) } }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(it)
+        }
     }
 
     /**
