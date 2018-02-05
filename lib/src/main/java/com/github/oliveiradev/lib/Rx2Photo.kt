@@ -135,6 +135,7 @@ open class Rx2Photo(private val context: Context) {
      * @param typeRequest - selected source for emitter
      * @return - observable that emits a single uri
      */
+    @Deprecated(message = "Because Google Photo Content Provider forbids the use of it ury in other contexts, in addition, from which the call was made")
     fun requestUri(typeRequest: TypeRequest): Observable<Uri> {
         response = URI
         startOverlapActivity(typeRequest)
@@ -171,6 +172,7 @@ open class Rx2Photo(private val context: Context) {
      * Request for list of uris
      * @return - observable that emits a list of uris
      */
+    @Deprecated(message = "Because Google Photo Content Provider forbids the use of it ury in other contexts, in addition, from which the call was made")
     fun requestMultiUri(): Observable<List<Uri>> {
         response = URI
         startOverlapActivity(TypeRequest.COMBINE_MULTIPLE)

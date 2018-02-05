@@ -114,11 +114,11 @@ public class MainActivity extends AppCompatActivity {
                     disposable.dispose();
                 }
                 disposable = Rx2Photo.with(v.getContext())
-                        .requestMultiUri()
+                        .requestMultiPath()
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Consumer<List<Uri>>() {
+                        .subscribe(new Consumer<List<String>>() {
                             @Override
-                            public void accept(List<Uri> bitmap) throws Exception {
+                            public void accept(List<String> bitmap) throws Exception {
                                 Log.d("TAG", String.valueOf(bitmap.size()));
                             }
                         }, new Consumer<Throwable>() {
