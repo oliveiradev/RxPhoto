@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.2.20'
+    ext.kotlin_version = '1.2.21'
     repositories {
         jcenter()
     }
@@ -41,8 +41,8 @@ kapt {
 }
 
 dependencies {
-    implementation "io.reactivex.rxjava2:rxjava:2.1.8"
-    implementation "io.reactivex.rxjava2:rxandroid:2.0.1"
+    implementation "io.reactivex.rxjava2:rxjava:2.1.9"
+    implementation "io.reactivex.rxjava2:rxandroid:2.0.2"
     compileOnly 'com.android.support:appcompat-v7:27.0.2'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
